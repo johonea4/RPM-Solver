@@ -1,34 +1,68 @@
+import os
+import csv
 import numpy as np
-from collections import Counter
 import time
 from enum import Enum
+from PIL import Image
+from collections import Counter
 
 """
 This File implements classes necessary to build a decision tree for 
 different translation types. Much of this file is re-use of code
 from a previous class -> CS6601 Artificial Intelligence
+
+The 6 classes in this file are:
+
+1. FigureTranslations
+    Enum class that defines the translation types
+2. DecisionNode
+    Class that defines a node in a tree. This class was created by
+    the instructor team in CS6601 as part of a given assignment.
+    the class hass been modified for this implementation.
+3. DecisionTree
+    Class created as part of an assignment for CS6601. This class
+    has been modified for this implementation. This class attempts
+    to build a decision tree given a list of features. It finds the
+    points to split based on a gaussian distribution of sections of the data.
+4. RandomForest
+    Class created as a part of an assignment for CS6601. This class
+    has been modified for this implementation. The random forest
+    is used to avoid overfitting. random features are given to each
+    tree a part of the forest. Each trained tree then votes on deciding
+    whether or not the translation is true. A probablity percentage is
+    then given back to the caller.
+5. TranslationTree
+    This class contains the translation type, the forest associated with it,
+    is the interface for forest training, and loads a saved forest.
+6. TranslationDecision
+    This class is the main interface for the agent. This Loads the
+    Translation trees, sends image data to the trees for analysis
+    and probablity, and returns the probabilities of the translations
+
+REF: Piazza Post #577
+
 """
 #List of the different type of available/known transformations
 class FigureTranslations(Enum):
-    Same=0x1
-    Deleted=0x2
-    NewShape=0x4
-    TransformedShape=0x8
-    Mirrored=0x10
-    Rotated=0x20
-    Filled=0x40
-    HalfFilled=0x80
-    Unfilled=0x100
-    HalfUnfilled=0x200
-    MovedLeft=0x400
-    MovedRight=0x800
-    MovedUp=0x1000
-    MovedDown=0x2000
+    NoChange        =0
+    ShapeChange     =1
+    MirroredX       =2
+    MirroredY       =3
+    Rotated         =4
+    FillChange      =5
+    MovedHorizontal =6
+    MovedDiagonal   =7
+    MovedVertical   =8
+    SizeChange      =9
+    ContainInsideChange=10
+    ContainOutsideChange=11
+    SplitHorizontal =12
+    SplitVertical   =13
 
 class DecisionNode:
     """Class to represent a single node in a decision tree."""
 
-    def __init__(self, left, right, decision_function, class_label=None):
+    def __init__(self, left, right, decision_function, gaus, class_label=None):
         """Create a decision function to select between left and right nodes.
 
         Note: In this representation 'True' values for a decision take us to
@@ -45,6 +79,7 @@ class DecisionNode:
         self.right = right
         self.decision_function = decision_function
         self.class_label = class_label
+        self.gaus = gaus
 
     def decide(self, feature):
         """Get a child node based on the decision function.
@@ -64,6 +99,23 @@ class DecisionNode:
 
         else:
             return self.right.decide(feature)
+
+    def save(self, fileptr):
+        if self.class_label is not None:
+            fileptr.write("class_label="+self.class_label+"\n")
+            return
+
+        fileptr.write("gaus[mean]="+self.gaus['mean']+"\n")
+        fileptr.write("gaus[std]="+self.gaus['std']+"\n")
+        fileptr.write("gaus[var]="+self.gaus['var']+"\n")
+
+        fileptr.write("leftNode:\n")
+        if self.left is not None:
+           self.left.save(fileptr)
+
+        fileptr.write("rigthNode:\n")
+        if self.right is not None:
+            self.left.save(fileptr)
 
 ################################################################################
 ################################################################################
@@ -115,6 +167,10 @@ class DecisionTree:
 
         return class_label
 
+    def saveTree(self,filePtr):
+        filePtr.write("rootNode:\n")
+        if self.root is not None:
+            self.root.save(filePtr)
 
 #######################################################################
 #             INTERNAL CLASS FUNCTIONS
@@ -125,18 +181,18 @@ class DecisionTree:
         for c in classes:
             if c != test:
                 return None
-        return DecisionNode(None,None,None,test)
+        return DecisionNode(None,None,None,None,test)
 
     def testDepth(self,depth,classes):
         if depth > self.depth_limit:
             nt = classes.count(1)
             nf = classes.count(0)
             if nt>nf:
-                return DecisionNode(None,None,None,1)
+                return DecisionNode(None,None,None,None,1)
             elif nf>nt:
-                return DecisionNode(None,None,None,0)
+                return DecisionNode(None,None,None,None,0)
             else:
-                return DecisionNode(None,None,None,classes[0])
+                return DecisionNode(None,None,None,None,classes[0])
         return None
 
     def getGaussian(self,arr):
@@ -148,6 +204,7 @@ class DecisionTree:
         rtn['mean'] = np.mean(arr)
         rtn['std'] = np.std(arr)
         rtn['var'] = rtn['std'] * rtn['std']
+        return rtn
 
     def testPoint(self,x,gaus):
         """
@@ -155,7 +212,7 @@ class DecisionTree:
         distribution and returns false if the distance
         from the mean is greater than the variance
         """
-        if(abs(x-gaus['mean'])>gaus['var'])
+        if abs(x-gaus['mean']) > gaus['var']:
             return False
         return True
 
@@ -206,7 +263,7 @@ class DecisionTree:
         summation = 0
 
         for c in current_classes:
-            summation += (len(c)/nvals) * gini_impurity(c)
+            summation += (len(c)/nvals) * self.gini_impurity(c)
 
         gain = impurity - summation
 
@@ -232,12 +289,12 @@ class DecisionTree:
             pList = list()
             nList = list()
             for j in range(len(attr)):
-                if(self.testPoint(attr[j])):
+                if(self.testPoint(attr[j],gaus)):
                     pList.append(classes[j])
                 else:
                     nList.append(classes[j])
             splitlist.append([pList,nList])
-            gains.append(gini_gain(classes,splitlist[i]))
+            gains.append(self.gini_gain(classes,splitlist[i]))
         alpha_max = max(gains)
         alpha_index = gains.index(alpha_max)
 
@@ -288,7 +345,7 @@ class DecisionTree:
         elif len(results['split_classes'][1])<=0:
             return self.testDepth(self.depth_limit+1,numattributes,results['split_classes'][0])
 
-        node = DecisionNode(None,None,lambda feat: (results['gaus']['mean']-feat[alpha_index])<=results['gaus']['var'])
+        node = DecisionNode(None,None,results['gaus'], lambda feat: (results['gaus']['mean']-feat[alpha_index])<=results['gaus']['var'])
         node.left = self.__build_tree__(np.array(posFeatures),results['split_classes'][0],depth+1)
         node.right = self.__build_tree__(np.array(negFeatures),results['split_classes'][1],depth+1)
 
@@ -304,8 +361,7 @@ class RandomForest:
 #######################################################################
 #            PUBLIC CLASS FUNCTIONS
 ######################################################################
-    def __init__(self, num_trees, depth_limit, example_subsample_rate,
-                 attr_subsample_rate):
+    def __init__(self, num_trees=20, depth_limit=50, example_subsample_rate=0.6):
         """Create a random forest.
 
          Args:
@@ -319,32 +375,27 @@ class RandomForest:
         self.num_trees = num_trees
         self.depth_limit = depth_limit
         self.example_subsample_rate = example_subsample_rate
-        self.attr_subsample_rate = attr_subsample_rate
 
-    def fit(self, features, classes):
+    def fit(self, diffImmageList, classes):
         """Build a random forest of decision trees using Bootstrap Aggregation.
 
-            images (list(list(int)): List of features.
+            features: list of image data
             classes (list(int)): Available classes.
         """
-        numFeatures = np.size(features,0)
-        numAttr = np.size(features,1)
+        numFeatures = np.size(diffImmageList,0)
         
         for i in range(self.num_trees):
-            forest = self.getForest(features,classes)
-            for f in forest[0]:
-                for j in range(numAttr):
-                    if j not in forest[2]:
-                        f[j] = None
+            forest = self.getForest(diffImmageList,classes)
             tree = DecisionTree(self.depth_limit)
-            tree.fit(forest[0],forest[1])
+            tree.TrainModel(forest[0],forest[1])
             self.trees.append(tree)
 
     def getProbability(self, features):
         """Classify a feature
 
         Args:
-            features list(int).
+            features: list(int).
+            This should be a flattened array of an image
         """
 
         classList = list()
@@ -359,23 +410,29 @@ class RandomForest:
 
         return nt/np.size(test)
         
+    def saveForest(self,treeName):
+        for i in range(self.num_trees):
+            fp = open(treeName+"_"+i,"w")
+            self.trees[i].saveTree(fp)
+            fp.close()
+
 ##############################################################
 #              PRIVATE CLASS FUNCTIONS
 # ############################################################ 
     def getForest(self,features,classes):
+        """
+        features: list of image data
+        classes: 1d array of 0(Negative) or 1(Positive) values
+        """
         numFeatures = np.size(features,0)
-        numAttr = np.size(features,1)
         numSubFeatures = int(self.example_subsample_rate * numFeatures)
-        numSubAttr = int(self.attr_subsample_rate * numAttr)
 
         randomFeatures = set()
-        randomAttr = set()
         while len(randomFeatures) < numSubFeatures: randomFeatures.add(np.random.randint(0,numFeatures))
-        while len (randomAttr) < numSubAttr: randomAttr.add(np.random.randint(0,numAttr))
         subFeatures = [ features[r] for r in randomFeatures ]
         subClasses = [ classes[r] for r in randomFeatures ]
 
-        return [np.array(subFeatures),np.array(subClasses),randomAttr]
+        return [np.array(subFeatures),np.array(subClasses)]
 
 ################################################################################
 ################################################################################
@@ -384,16 +441,73 @@ class RandomForest:
 ################################################################################
 
 class TranslationTree:
-    def __init__(self, training, t_type):
+    def __init__(self, t_type):
         """
         If in training mode, will allow for training of the
         forests for the given translation type. If not, the tree 
         data should be loaded from a CSV file stored locally
         """
-        self.type = FigureTranslations()
         self.type=t_type
-        self.training=training
+        self.decisionForest=None
+        self.trainingSet=list()
+        self.trainingClasses=list()
 
-        if(training==False):
-            #Load Data
-            return
+    def AddFeature(self, image1, image2, classVal):
+        i1 = np.array(image1).flatten()
+        i2 = np.array(image2).flatten()
+
+        ix = np.logical_xor(i1,i2)
+
+        self.trainingSet.append(list(ix))
+        self.trainingClasses.append(classVal)
+
+    def TrainForest(self):
+        self.decisionForest = RandomForest()
+        self.decisionForest.fit(self.trainingSet,self.trainingClasses)
+        self.decisionForest.saveForest()
+
+class TranslationDecision:
+    def __init__(self):
+        self.translations = dict()
+        for t in FigureTranslations:
+            self.translations[t] = TranslationTree(t)
+    
+    def GetTrainingDataFiles(self):
+        data = dict()
+        for t in self.translations:
+            fname = os.path.join("Problems",t.name+"_Training.csv")
+            if not os.path.isfile(fname):
+                continue
+            f = open(fname,"r")
+            csvdict = csv.DictReader(f)
+            data[t] = list()
+            for row in csvdict:
+                data[t].append(row)
+        return data
+                
+    def TrainTrees(self, data):
+        for t in self.translations:
+            for d in data[t]:
+                fname = os.path.join("Problems","Basic Problems "+d['ProblemSet'])
+                pnum = d['ProblemNumber']
+                if len(pnum) == 1:
+                    pnum = "0" + pnum
+                fname = os.path.join(fname,"Basic Problem "+d['ProblemSet']+"-"+pnum)
+                i1 = os.path.join(fname,d['Image1']+".png")
+                i2 = os.path.join(fname,d['Image2']+".png")
+
+                cl = int(d['Class'])
+                ImageData1 = Image.open(i1)
+                ImageData2 = Image.open(i2)
+
+                self.translations[t].AddFeature(ImageData1.getdata(),ImageData2.getdata(),cl)
+            self.translations[t].TrainForest()
+
+def main():
+    td = TranslationDecision()
+    data = td.GetTrainingDataFiles()
+    td.TrainTrees(data)
+
+
+if __name__ == "__main__":
+    main()

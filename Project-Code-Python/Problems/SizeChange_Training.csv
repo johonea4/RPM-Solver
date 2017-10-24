@@ -1,0 +1,13 @@
+ProblemSet,ProblemNumber,Image1,Image2,Class
+C,2,A,B,1
+C,2,B,C,1
+C,2,D,E,1
+C,2,E,F,1
+C,2,G,H,1
+C,2,A,D,1
+C,2,D,G,1
+C,2,H,5,0
+C,2,H,2,0
+C,2,H,6,0
+C,2,H,3,0
+C,2,H,7,0
