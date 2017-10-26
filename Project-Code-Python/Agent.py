@@ -45,7 +45,8 @@ class Agent:
 
         solver.AddImages(problems,solutions)
         solver.GetDifferences()
-        solver.CreateGraph(False)
+        solver.CreateGraph()
         solver.GetDistances()
+        rtn = solver.GetAnswer()
 
-        return -1
+        return rtn
