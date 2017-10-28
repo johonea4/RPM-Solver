@@ -47,6 +47,10 @@ class Agent:
         solver.GetDifferences()
         solver.CreateGraph()
         solver.GetDistances()
+
+        solver.OutputImageData(problem.name)
+        solver.OutputGraphNodes(problem.name)
+
         rtn = solver.GetAnswer()
 
         return rtn

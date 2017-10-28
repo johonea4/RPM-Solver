@@ -103,7 +103,41 @@ class ImageSolver:
                     self.distances[comp[0]][str(i)] = self.graph[comp[0]].GetDistance(self.graph[comp[1]+str(i)])
             else:
                 self.distances[comp[0]][comp[1]] = self.graph[comp[0]].GetDistance(self.graph[comp[1]])
-               
+    def OutputImageData(self, problemName):
+        path = os.path.join("ProblemImageData",problemName)
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        for x in self.xOrDict:
+            imname = "xor_" + x + ".png"
+            imname = os.path.join(path,imname)
+            im = Image.new('1',(184,184))
+            im.putdata(self.xOrDict[x])
+            im.save(imname)
+        for x in self.andDict:
+            imname = "and_" + x + ".png"
+            imname = os.path.join(path,imname)
+            im = Image.new('1',(184,184))
+            im.putdata(self.andDict[x])
+            im.save(imname)
+
+    def OutputGraphNodes(self,problemName):
+        path = os.path.join("ProblemImageData",problemName)
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        fname = "Gaph_" + problemName + ".csv"
+        fname = os.path.join(path,fname)
+        f = open(fname,"w")
+        writer = csv.DictWriter(f,fieldnames=['Name','Similarity_X','Similarity_Y'])
+        writer.writeheader()
+        for node in self.graph:
+            data = dict()
+            data["Name"] = self.graph[node].label
+            data["Similarity_X"] = self.graph[node].points[0]
+            data["Similarity_Y"] = self.graph[node].points[1] 
+            writer.writerow(data)
+        f.close
+
+
     def GetAnswer(self):
         if self.ptype == "2x2":
             distanceTotal = [0] * 6
