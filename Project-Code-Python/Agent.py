@@ -48,7 +48,7 @@ class Agent:
         solver.CreateGraph()
         solver.GetDistances()
 
-        if(False):
+        if False:
             solver.OutputImageData(problem.name)
             solver.OutputGraphNodes(problem.name)
 
