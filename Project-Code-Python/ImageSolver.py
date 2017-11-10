@@ -50,12 +50,13 @@ class ImageSolver:
             im = Image.open(solutions[s])
             im = im.convert('1')
             self.solutionImages[s] = np.array(im.getdata())
+        self.numAnswers = len(solutions)
 
     def __Get_xor_And__(self,r1,c1,r2,c2,m):
         i1 = m[r1][c1]
         i2 = m[r2][c2]
         if i2 == '#':
-            for i in range(1,7):
+            for i in range(1,self.numAnswers+1):
                 self.xOrDict[i1 + str(i)] = self.problemImages[i1] ^ self.solutionImages[str(i)]
                 self.andDict[i1 + str(i)] = self.problemImages[i1] & self.solutionImages[str(i)]                       
         else:
@@ -99,7 +100,7 @@ class ImageSolver:
         for comp in m:
             self.distances[comp[0]] = dict()
             if len(comp[1]) == 1:
-                for i in range(1,7):
+                for i in range(1,self.numAnswers+1):
                     self.distances[comp[0]][str(i)] = self.graph[comp[0]].GetDistance(self.graph[comp[1]+str(i)])
             else:
                 self.distances[comp[0]][comp[1]] = self.graph[comp[0]].GetDistance(self.graph[comp[1]])
@@ -140,20 +141,20 @@ class ImageSolver:
 
     def GetAnswer(self):
         if self.ptype == "2x2":
-            distanceTotal = [0] * 6
+            distanceTotal = [0] * self.numAnswers
             for comp in self.distances:
                 for n in self.distances[comp]:
                     distanceTotal[int(n)-1] += self.distances[comp][n] * self.distances[comp][n]
             distanceTotal = np.sqrt(distanceTotal)
             return (np.argmin(distanceTotal)+1)
         else:
-            distanceTotal = [0] * 6
+            distanceTotal = [0] * self.numAnswers
             dr1 = self.distances['AB']['BC']
             dr2 = self.distances['DE']['EF']
             dc1 = self.distances['AD']['DG']
             dc2 = self.distances['BE']['EH']
 
-            for i in range(0,6):
+            for i in range(0,self.numAnswers):
                 diff1 = dr1 - self.distances['GH'][str(i+1)]
                 diff2 = dc1 - self.distances['CF'][str(i+1)]
                 diff3 = dr2 - self.distances['GH'][str(i+1)]

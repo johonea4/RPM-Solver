@@ -40,7 +40,7 @@ class Agent:
         for p in problem.figures:
             if p >= 'A' and p <= 'H':
                 problems[p] = problem.figures[p].visualFilename
-            elif p >= '1' and p <= '6':
+            elif p >= '1' and p <= '8':
                 solutions[p] = problem.figures[p].visualFilename
 
         solver.AddImages(problems,solutions)
