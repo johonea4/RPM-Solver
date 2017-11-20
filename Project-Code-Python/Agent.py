@@ -10,8 +10,9 @@
 
 # Install Pillow and uncomment this line to access image processing.
 from PIL import Image
-import numpy
+import numpy as np
 from ImageSolver import ImageSolver
+from VisualProcessor import VisualProcessor
 
 class Agent:
     # The default constructor for your Agent. Make sure to execute any
@@ -33,25 +34,9 @@ class Agent:
     # Returning your answer as a string may cause your program to crash.
     def Solve(self,problem):
 
-        solver = ImageSolver(problem.problemType)
-        problems = dict()
-        solutions = dict()
+        print("Starting Solver for problem %s\n" % problem.name)
 
-        for p in problem.figures:
-            if p >= 'A' and p <= 'H':
-                problems[p] = problem.figures[p].visualFilename
-            elif p >= '1' and p <= '8':
-                solutions[p] = problem.figures[p].visualFilename
+        solver = VisualProcessor(problem.figures,problem.problemType)
+        #solver.OutputImageCombinations(problem.name)
 
-        solver.AddImages(problems,solutions)
-        solver.GetDifferences()
-        solver.CreateGraph()
-        solver.GetDistances()
-
-        if False:
-            solver.OutputImageData(problem.name)
-            solver.OutputGraphNodes(problem.name)
-
-        rtn = solver.GetAnswer()
-
-        return rtn
+        return -1
