@@ -6,6 +6,26 @@ import math
 from PIL import Image
 import Clusters
 
+class Features_t():
+    name = ""
+    numComponentsDifference=0
+    imageMeans=[]
+    imageStd=[]
+    xoredMean=0.0
+    xoredStd=0.0
+    noredMean=0.0
+    noredStd=0.0
+    clusterCenters = []
+    clusterDensities = []
+    clusterDistributions = []
+    xoredCenters = []
+    xoredDensities = []
+    xoredDistributuions = []
+    noredCenters = []
+    noredDensities = []
+    noredDistributuions = []
+
+
 class VisualProcessor:
     """description of class"""
 
@@ -19,16 +39,17 @@ class VisualProcessor:
         self.problemImages = dict()
 
         #Data used for GMM's
-        self.solutionInverted = dict()
-        self.problemInverted = dict()
-        self.solutionMM = dict()
-        self.problemMM = dict()
+        self.imageInverted = dict()
+        self.imageMM = dict()
 
         #Data used for Image differences
         self.xored = dict()
         self.nored = dict()
-        self.noredObjects = dict()
-        self.xoredObjects = dict()
+        self.noredMM = dict()
+        self.xoredMM = dict()
+
+        #data combined into a feature set
+        self.features = dict()
 
         #############################################################
         #---------------------Create Images--------------------------
@@ -43,13 +64,13 @@ class VisualProcessor:
             im = im.convert('1')
             self.problemImages[p] = np.array(im.getdata())
             self.problemImages[p][self.problemImages[p]>0] = 1
-            self.problemInverted[p] = np.logical_not(self.problemImages[p]).astype(int)
+            self.imageInverted[p] = np.logical_not(self.problemImages[p]).astype(int)
         for s in self.solutionFiles:
             im = Image.open(self.solutionFiles[s])
             im = im.convert('1')
             self.solutionImages[s] = np.array(im.getdata())
             self.solutionImages[s][self.solutionImages[s]>0] = 1
-            self.solutionInverted[s] = np.logical_not(self.solutionImages[s]).astype(int)
+            self.imageInverted[s] = np.logical_not(self.solutionImages[s]).astype(int)
 
         self.numAnswers = len(self.solutionFiles)
         #############################################################
@@ -94,17 +115,51 @@ class VisualProcessor:
                  self.__Get_xor_And__(r,c,r+1,c)
 
     def __GetGMM__(self):
-        for p in self.problemInverted:
-            self.problemMM[p] = Clusters.GetClusters(self.problemInverted[p], (184,184))
-            if self.problemMM[p] != None: print "Image: " + p + ";".join("("+str(i)+","+str(j)+")" for i,j in self.problemMM[p].means) + "\n"
-            else: print "\tImage %s returned None. Image is most likely blank." %(p)
-        for s in self.solutionInverted:
-            self.solutionMM[s] = Clusters.GetClusters(self.solutionInverted[s],(184,184))
-            if self.solutionMM[s] != None: print "Image: " + s + ";".join("("+str(i)+","+str(j)+")" for i,j in self.solutionMM[s].means) + "\n"
-            else: print "\tImage %s GMM returned None. Image is most likely blank." %(s)
+        for p in self.imageInverted:
+            self.imageMM[p] = Clusters.GetClusters(self.imageInverted[p], (184,184))
+        for x in self.xored:
+            self.xoredMM[x] = Clusters.GetClusters(self.xored[x],(184,184))
+        for n in self.nored:
+            self.noredMM[n] = Clusters.GetClusters(self.nored[n],(184,184))
+
+
 
     def __BuildFeatureFrames__(self):
-        return
+        for x in self.xored:
+            tmp = Features_t()
+            tmp.name = x
+            
+            tmp.xoredMean = np.mean(self.xored[x])
+            tmp.xoredStd = np.std(self.xored[x])
+            
+            tmp.noredMean = np.mean(self.nored[x])
+            tmp.noredMean = np.std(self.nored[x])
+            
+            tmp.imageMeans.append(np.mean(self.imageInverted[x[0]]))
+            tmp.imageMeans.append(np.mean(self.imageInverted[x[1]]))
+            tmp.imageStd.append(np.std(self.imageInverted[x[0]]))
+            tmp.imageStd.append(np.std(self.imageInverted[x[1]]))
+            
+            tmp.clusterCenters.append(None if self.imageMM[x[0]]==None else self.imageMM[x[0]].means)
+            tmp.clusterCenters.append(None if self.imageMM[x[1]]==None else self.imageMM[x[1]].means)
+            tmp.clusterDensities.append(None if self.imageMM[x[0]]==None else [ np.size(self.imageMM[x[0]].segments[i],0) for i in range(0,self.imageMM[x[0]].components)])
+            tmp.clusterDensities.append(None if self.imageMM[x[1]]==None else [ np.size(self.imageMM[x[1]].segments[i],0) for i in range(0,self.imageMM[x[1]].components)])
+            tmp.clusterDistributions.append(None if self.imageMM[x[0]]==None else [ np.std(self.imageMM[x[0]].segments[i],0) for i in range(0,self.imageMM[x[0]].components)])
+            tmp.clusterDistributions.append(None if self.imageMM[x[1]]==None else [ np.std(self.imageMM[x[1]].segments[i],0) for i in range(0,self.imageMM[x[1]].components)])
+
+            tmp.xoredCenters.append(None if self.xoredMM[x]==None else self.xoredMM[x].means)
+            tmp.xoredDensities.append(None if self.xoredMM[x]==None else [ np.size(self.xoredMM[x].segments[i],0) for i in range(0,self.xoredMM[x].components)])
+            tmp.xoredDistributuions.append(None if self.xoredMM[x]==None else [ np.std(self.xoredMM[x].segments[i],0) for i in range(0,self.xoredMM[x].components)])
+
+            tmp.noredCenters.append(None if self.noredMM[x]==None else self.noredMM[x].means)
+            tmp.noredDensities.append(None if self.noredMM[x]==None else [ np.size(self.noredMM[x].segments[i],0) for i in range(0,self.noredMM[x].components)])
+            tmp.noredDistributuions.append(None if self.noredMM[x]==None else [ np.std(self.noredMM[x].segments[i],0) for i in range(0,self.noredMM[x].components)])
+
+            c1 = 0 if self.imageMM[x[0]]==None else self.imageMM[x[0]].components
+            c2 = 0 if self.imageMM[x[1]]==None else self.imageMM[x[1]].components
+            tmp.numComponentsDifference = math.fabs(c1 - c2)
+
+            self.features[x] = tmp
 
     def OutputImageCombinations(self, problemName):
         path = os.path.join("CombinedImages",problemName)
