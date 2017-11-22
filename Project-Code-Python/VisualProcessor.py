@@ -55,9 +55,9 @@ class VisualProcessor:
         #---------------------Create Images--------------------------
         #############################################################
         for p in figures:
-            if p >= 'A' and p <= 'H':
+            if p.isalpha():
                 self.problemFiles[p] = figures[p].visualFilename
-            elif p >= '1' and p <= '8':
+            elif p.isdigit():
                 self.solutionFiles[p] = figures[p].visualFilename
         for p in self.problemFiles:
             im = Image.open(self.problemFiles[p])
@@ -76,6 +76,7 @@ class VisualProcessor:
         #############################################################
         #----------------------matrix helpers------------------------
         #############################################################
+        self.problemType = ptype
         if ptype=="2x2":
             self.matrix = [ [ 'A', 'B'],
                             [ 'C', "#"] ]
@@ -90,7 +91,7 @@ class VisualProcessor:
         #############################################################
         self.__GetImageCombinations__()
         self.__GetGMM__()
-        self.__BuildFeatureFrames__()
+        self.__BuildFeatureSummary__()
 
     def __Get_xor_And__(self,r1,c1,r2,c2):
         i1 = self.matrix[r1][c1]
@@ -124,7 +125,7 @@ class VisualProcessor:
 
 
 
-    def __BuildFeatureFrames__(self):
+    def __BuildFeatureSummary__(self):
         for x in self.xored:
             tmp = Features_t()
             tmp.name = x
