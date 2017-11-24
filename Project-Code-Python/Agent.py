@@ -11,8 +11,8 @@
 # Install Pillow and uncomment this line to access image processing.
 from PIL import Image
 import numpy as np
-from ImageSolver import ImageSolver
 from VisualProcessor import VisualProcessor
+from Comparator import Comparator
 
 class Agent:
     # The default constructor for your Agent. Make sure to execute any
@@ -36,7 +36,44 @@ class Agent:
 
         print("Starting Solver for problem %s\n" % problem.name)
 
-        solver = VisualProcessor(problem.figures,problem.problemType)
-        #solver.OutputImageCombinations(problem.name)
+        processor = VisualProcessor(problem.figures,problem.problemType)
+        compare = Comparator(processor)
+        compare.CreateGraphNodes()
+        proposedAnswers = compare.GetSolutions()
 
-        return -1
+        if proposedAnswers == None or len(proposedAnswers)<=0:
+            return -1;
+
+        answers = []
+        for answer in proposedAnswers:
+            ans = proposedAnswers[answer][0]
+            val = proposedAnswers[answer][1]
+            print "\tAnswer for " + answer + " method: [" + str(ans) + ", " + str(val) + "]"
+            answers.append(proposedAnswers[answer][0])
+
+        answerCounts = []
+        for i in range(0,processor.numAnswers):
+            answerCounts.append(answers.count(i))
+        #solver.OutputImageCombinations(problem.name)
+        
+        if np.all(np.array(answerCounts)<=1):
+            return -1
+
+        maxCounts = np.max(answerCounts)
+        indexes = np.argwhere(answerCounts==maxCounts)
+        indexes = list(indexes.flatten())
+
+        if len(indexes)>1:
+            return -1
+            #bestAns = -1
+            #bestDist = float('inf')
+            #for answer in proposedAnswers:
+            #    for i in indexes:
+            #        if proposedAnswers[answer][0]==i and proposedAnswers[answer][1] < bestDist:
+            #            bestDist = proposedAnswers[answer][1]
+            #            bestAns = proposedAnswers[answer][0]
+            #agreedAnswer = bestAns
+        else:
+            agreedAnswer = indexes[0]
+
+        return agreedAnswer+1

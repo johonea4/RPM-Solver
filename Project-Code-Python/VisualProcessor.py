@@ -7,23 +7,24 @@ from PIL import Image
 import Clusters
 
 class Features_t():
-    name = ""
-    numComponentsDifference=0
-    imageMeans=[]
-    imageStd=[]
-    xoredMean=0.0
-    xoredStd=0.0
-    noredMean=0.0
-    noredStd=0.0
-    clusterCenters = []
-    clusterDensities = []
-    clusterDistributions = []
-    xoredCenters = []
-    xoredDensities = []
-    xoredDistributuions = []
-    noredCenters = []
-    noredDensities = []
-    noredDistributuions = []
+    def __init__(self):
+        self.name = ""
+        self.numComponentsDifference=0
+        self.imageMeans=[]
+        self.imageStd=[]
+        self.xoredMean=0.0
+        self.xoredStd=0.0
+        self.noredMean=0.0
+        self.noredStd=0.0
+        self.clusterCenters = []
+        self.clusterDensities = []
+        self.clusterDistributions = []
+        self.xoredCenters = []
+        self.xoredDensities = []
+        self.xoredDistributions = []
+        self.noredCenters = []
+        self.noredDensities = []
+        self.noredDistributions = []
 
 
 class VisualProcessor:
@@ -150,11 +151,11 @@ class VisualProcessor:
 
             tmp.xoredCenters.append(None if self.xoredMM[x]==None else self.xoredMM[x].means)
             tmp.xoredDensities.append(None if self.xoredMM[x]==None else [ np.size(self.xoredMM[x].segments[i],0) for i in range(0,self.xoredMM[x].components)])
-            tmp.xoredDistributuions.append(None if self.xoredMM[x]==None else [ np.std(self.xoredMM[x].segments[i],0) for i in range(0,self.xoredMM[x].components)])
+            tmp.xoredDistributions.append(None if self.xoredMM[x]==None else [ np.std(self.xoredMM[x].segments[i],0) for i in range(0,self.xoredMM[x].components)])
 
             tmp.noredCenters.append(None if self.noredMM[x]==None else self.noredMM[x].means)
             tmp.noredDensities.append(None if self.noredMM[x]==None else [ np.size(self.noredMM[x].segments[i],0) for i in range(0,self.noredMM[x].components)])
-            tmp.noredDistributuions.append(None if self.noredMM[x]==None else [ np.std(self.noredMM[x].segments[i],0) for i in range(0,self.noredMM[x].components)])
+            tmp.noredDistributions.append(None if self.noredMM[x]==None else [ np.std(self.noredMM[x].segments[i],0) for i in range(0,self.noredMM[x].components)])
 
             c1 = 0 if self.imageMM[x[0]]==None else self.imageMM[x[0]].components
             c2 = 0 if self.imageMM[x[1]]==None else self.imageMM[x[1]].components
