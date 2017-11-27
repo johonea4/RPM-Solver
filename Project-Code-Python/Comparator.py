@@ -2,14 +2,6 @@ import numpy as np
 import math
 from VisualProcessor import VisualProcessor
 
-class Solutions():
-    closestXored = -1
-    closestNored = -1
-    closestImage = -1
-    closestXoredClusters = -1
-    closestNoredClusters = -1
-    closestImageClusters = -1
-
 class GraphNode:
     def __init__(self,label,*args):
         self.points = list()
@@ -43,18 +35,19 @@ class Comparator(object):
         ###############################################
         ################### VARIABLES #################
         ###############################################
-        self.xoredNodes = dict()
-        self.noredNodes = dict()
-        self.ImageNodes = dict()
-        self.xoredClusterNodes = dict()
-        self.noredClusterNodes = dict()
-        self.imageClusterNodes = dict()
-        self.xoredDensitiesNodes = dict()
-        self.noredDensitiesNodes = dict()
-        self.imageDensitiesNodes = dict()
-        self.xoredDeviationNodes = dict()
-        self.noredDeviationNodes = dict()
-        self.imageDeviationNodes = dict()
+        self.Nodes=dict()
+        self.Nodes['xored'] = self.xoredNodes = dict()
+        self.Nodes['nored'] = self.noredNodes = dict()
+        self.Nodes['image'] = self.ImageNodes = dict()
+        self.Nodes['xoredclusters'] = self.xoredClusterNodes = dict()
+        self.Nodes['noredclusters'] = self.noredClusterNodes = dict()
+        self.Nodes['imageclusters'] = self.imageClusterNodes = dict()
+        self.Nodes['xoreddens'] = self.xoredDensitiesNodes = dict()
+        self.Nodes['noreddens'] = self.noredDensitiesNodes = dict()
+        self.Nodes['imagedens'] = self.imageDensitiesNodes = dict()
+        self.Nodes['xoredstd'] = self.xoredDeviationNodes = dict()
+        self.Nodes['noredstd'] = self.noredDeviationNodes = dict()
+        self.Nodes['imagestd'] = self.imageDeviationNodes = dict()
 
     def CreateGraphNodes(self):
         """
@@ -237,245 +230,33 @@ class Comparator(object):
         [AB] to [BC] is to [DE] to [EF] is to [GH] to [H#]
         [AD] to [DG] is to [BE] to [EH] is to [CF] to [F#]
         """
+        types = ['image','xored','nored',
+                 'xoredclusters','xoredstd','xoreddens',
+                 'noredclusters','noredstd','noreddens',
+                 'imageclusters','imagestd','imagedens']
         answers = dict()
         if self.problemType == '2x2':
-            x1 = self.__GetDistances__('C',self.xoredNodes['AB'],'xored')
-            x2 = self.__GetDistances__('B',self.xoredNodes['AC'],'xored')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['xored'] = [idx,ans[idx]]
+            for t in types:
+                x1 = self.__GetDistances__('C',self.Nodes[t]['AB'],t)
+                x2 = self.__GetDistances__('B',self.Nodes[t]['AC'],t)
+                ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
+                idx = np.argmin(ans)
+                answers[t] = [idx,ans[idx]]
 
-            x1 = self.__GetDistances__('C',self.noredNodes['AB'],'nored')
-            x2 = self.__GetDistances__('B',self.noredNodes['AC'],'nored')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['nored'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.ImageNodes['AB'],'image')
-            x2 = self.__GetDistances__('B',self.ImageNodes['AC'],'image')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['image'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredClusterNodes['AB'],'xoredclusters')
-            x2 = self.__GetDistances__('B',self.xoredClusterNodes['AC'],'xoredclusters')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['xoredClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDeviationNodes['AB'],'xoredstd')
-            x2 = self.__GetDistances__('B',self.xoredDeviationNodes['AC'],'xoredstd')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['xoredStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDensitiesNodes['AB'],'xoreddens')
-            x2 = self.__GetDistances__('B',self.xoredDensitiesNodes['AC'],'xoreddens')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['xoredDensities'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredClusterNodes['AB'],'noredclusters')
-            x2 = self.__GetDistances__('B',self.xoredClusterNodes['AC'],'noredclusters')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['noredClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDeviationNodes['AB'],'noredstd')
-            x2 = self.__GetDistances__('B',self.xoredDeviationNodes['AC'],'noredstd')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['noredStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDensitiesNodes['AB'],'noreddens')
-            x2 = self.__GetDistances__('B',self.xoredDensitiesNodes['AC'],'noreddens')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['noredDensities'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredClusterNodes['AB'],'imageclusters')
-            x2 = self.__GetDistances__('B',self.xoredClusterNodes['AC'],'imageclusters')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['imageClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDeviationNodes['AB'],'imagestd')
-            x2 = self.__GetDistances__('B',self.xoredDeviationNodes['AC'],'imagestd')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['imageStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('C',self.xoredDensitiesNodes['AB'],'imagedens')
-            x2 = self.__GetDistances__('B',self.xoredDensitiesNodes['AC'],'imagedens')
-            ans = np.sqrt(np.add(np.square(x1),np.square(x2)))
-            idx = np.argmin(ans)
-            answers['imageDensities'] = [idx,ans[idx]]
         else:
-            x1 = self.__GetDistances__('H',self.xoredNodes['GH'],'xored')
-            x2 = self.__GetDistances__('F',self.xoredNodes['CF'],'xored')
-            dr1 = self.xoredNodes['AB'].GetDistance(self.xoredNodes['BC'])
-            dr2 = self.xoredNodes['DE'].GetDistance(self.xoredNodes['EF'])
-            dc1 = self.xoredNodes['AD'].GetDistance(self.xoredNodes['DG'])
-            dc2 = self.xoredNodes['BE'].GetDistance(self.xoredNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['xored'] = [idx,ans[idx]]
+            for t in types:
+                x1 = self.__GetDistances__('H',self.Nodes[t]['GH'],t)
+                x2 = self.__GetDistances__('F',self.Nodes[t]['CF'],t)
+                dr1 = self.Nodes[t]['AB'].GetDistance(self.Nodes[t]['BC'])
+                dr2 = self.Nodes[t]['DE'].GetDistance(self.Nodes[t]['EF'])
+                dc1 = self.Nodes[t]['AD'].GetDistance(self.Nodes[t]['DG'])
+                dc2 = self.Nodes[t]['BE'].GetDistance(self.Nodes[t]['EH'])
+                diff1 = np.square(np.subtract(x1,dr1))
+                diff2 = np.square(np.subtract(x1,dr2))
+                diff3 = np.square(np.subtract(x2,dc1))
+                diff4 = np.square(np.subtract(x2,dc2))
+                ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
+                idx = np.argmin(ans)
+                answers[t] = [idx,ans[idx]]
 
-            x1 = self.__GetDistances__('H',self.noredNodes['GH'],'nored')
-            x2 = self.__GetDistances__('F',self.noredNodes['CF'],'nored')
-            dr1 = self.noredNodes['AB'].GetDistance(self.noredNodes['BC'])
-            dr2 = self.noredNodes['DE'].GetDistance(self.noredNodes['EF'])
-            dc1 = self.noredNodes['AD'].GetDistance(self.noredNodes['DG'])
-            dc2 = self.noredNodes['BE'].GetDistance(self.noredNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['nored'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.ImageNodes['GH'],'image')
-            x2 = self.__GetDistances__('F',self.ImageNodes['CF'],'image')
-            dr1 = self.ImageNodes['AB'].GetDistance(self.ImageNodes['BC'])
-            dr2 = self.ImageNodes['DE'].GetDistance(self.ImageNodes['EF'])
-            dc1 = self.ImageNodes['AD'].GetDistance(self.ImageNodes['DG'])
-            dc2 = self.ImageNodes['BE'].GetDistance(self.ImageNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['image'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.xoredClusterNodes['GH'],'xoredclusters')
-            x2 = self.__GetDistances__('F',self.xoredClusterNodes['CF'],'xoredclusters')
-            dr1 = self.xoredClusterNodes['AB'].GetDistance(self.xoredClusterNodes['BC'])
-            dr2 = self.xoredClusterNodes['DE'].GetDistance(self.xoredClusterNodes['EF'])
-            dc1 = self.xoredClusterNodes['AD'].GetDistance(self.xoredClusterNodes['DG'])
-            dc2 = self.xoredClusterNodes['BE'].GetDistance(self.xoredClusterNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['xoredClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.xoredDeviationNodes['GH'],'xoredstd')
-            x2 = self.__GetDistances__('F',self.xoredDeviationNodes['CF'],'xoredstd')
-            dr1 = self.xoredDeviationNodes['AB'].GetDistance(self.xoredDeviationNodes['BC'])
-            dr2 = self.xoredDeviationNodes['DE'].GetDistance(self.xoredDeviationNodes['EF'])
-            dc1 = self.xoredDeviationNodes['AD'].GetDistance(self.xoredDeviationNodes['DG'])
-            dc2 = self.xoredDeviationNodes['BE'].GetDistance(self.xoredDeviationNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['xoredStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.xoredDensitiesNodes['GH'],'xoreddens')
-            x2 = self.__GetDistances__('F',self.xoredDensitiesNodes['CF'],'xoreddens')
-            dr1 = self.xoredDensitiesNodes['AB'].GetDistance(self.xoredDensitiesNodes['BC'])
-            dr2 = self.xoredDensitiesNodes['DE'].GetDistance(self.xoredDensitiesNodes['EF'])
-            dc1 = self.xoredDensitiesNodes['AD'].GetDistance(self.xoredDensitiesNodes['DG'])
-            dc2 = self.xoredDensitiesNodes['BE'].GetDistance(self.xoredDensitiesNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['xoredDensities'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.noredClusterNodes['GH'],'noredclusters')
-            x2 = self.__GetDistances__('F',self.noredClusterNodes['CF'],'noredclusters')
-            dr1 = self.noredClusterNodes['AB'].GetDistance(self.noredClusterNodes['BC'])
-            dr2 = self.noredClusterNodes['DE'].GetDistance(self.noredClusterNodes['EF'])
-            dc1 = self.noredClusterNodes['AD'].GetDistance(self.noredClusterNodes['DG'])
-            dc2 = self.noredClusterNodes['BE'].GetDistance(self.noredClusterNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['noredClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.noredDeviationNodes['GH'],'noredstd')
-            x2 = self.__GetDistances__('F',self.noredDeviationNodes['CF'],'noredstd')
-            dr1 = self.noredDeviationNodes['AB'].GetDistance(self.noredDeviationNodes['BC'])
-            dr2 = self.noredDeviationNodes['DE'].GetDistance(self.noredDeviationNodes['EF'])
-            dc1 = self.noredDeviationNodes['AD'].GetDistance(self.noredDeviationNodes['DG'])
-            dc2 = self.noredDeviationNodes['BE'].GetDistance(self.noredDeviationNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['noredStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.noredDensitiesNodes['GH'],'noreddens')
-            x2 = self.__GetDistances__('F',self.noredDensitiesNodes['CF'],'noreddens')
-            dr1 = self.noredDensitiesNodes['AB'].GetDistance(self.noredDensitiesNodes['BC'])
-            dr2 = self.noredDensitiesNodes['DE'].GetDistance(self.noredDensitiesNodes['EF'])
-            dc1 = self.noredDensitiesNodes['AD'].GetDistance(self.noredDensitiesNodes['DG'])
-            dc2 = self.noredDensitiesNodes['BE'].GetDistance(self.noredDensitiesNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['noredDensities'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.imageClusterNodes['GH'],'imageclusters')
-            x2 = self.__GetDistances__('F',self.imageClusterNodes['CF'],'imageclusters')
-            dr1 = self.imageClusterNodes['AB'].GetDistance(self.imageClusterNodes['BC'])
-            dr2 = self.imageClusterNodes['DE'].GetDistance(self.imageClusterNodes['EF'])
-            dc1 = self.imageClusterNodes['AD'].GetDistance(self.imageClusterNodes['DG'])
-            dc2 = self.imageClusterNodes['BE'].GetDistance(self.imageClusterNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['imageClusters'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.imageDeviationNodes['GH'],'imagestd')
-            x2 = self.__GetDistances__('F',self.imageDeviationNodes['CF'],'imagestd')
-            dr1 = self.imageDeviationNodes['AB'].GetDistance(self.imageDeviationNodes['BC'])
-            dr2 = self.imageDeviationNodes['DE'].GetDistance(self.imageDeviationNodes['EF'])
-            dc1 = self.imageDeviationNodes['AD'].GetDistance(self.imageDeviationNodes['DG'])
-            dc2 = self.imageDeviationNodes['BE'].GetDistance(self.imageDeviationNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['imageStd'] = [idx,ans[idx]]
-
-            x1 = self.__GetDistances__('H',self.imageDensitiesNodes['GH'],'imagedens')
-            x2 = self.__GetDistances__('F',self.imageDensitiesNodes['CF'],'imagedens')
-            dr1 = self.imageDensitiesNodes['AB'].GetDistance(self.imageDensitiesNodes['BC'])
-            dr2 = self.imageDensitiesNodes['DE'].GetDistance(self.imageDensitiesNodes['EF'])
-            dc1 = self.imageDensitiesNodes['AD'].GetDistance(self.imageDensitiesNodes['DG'])
-            dc2 = self.imageDensitiesNodes['BE'].GetDistance(self.imageDensitiesNodes['EH'])
-            diff1 = np.square(np.subtract(x1,dr1))
-            diff2 = np.square(np.subtract(x1,dr2))
-            diff3 = np.square(np.subtract(x2,dc1))
-            diff4 = np.square(np.subtract(x2,dc2))
-            ans = np.sqrt(np.add(np.add(np.add(diff1,diff2),diff3),diff4))
-            idx = np.argmin(ans)
-            answers['imageDensities'] = [idx,ans[idx]]
         return answers

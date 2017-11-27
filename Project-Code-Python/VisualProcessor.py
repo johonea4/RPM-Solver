@@ -100,13 +100,19 @@ class VisualProcessor:
         if i2 == '#':
             for i in range(1,self.numAnswers+1):
                 self.xored[i1 + str(i)] = self.problemImages[i1] ^ self.solutionImages[str(i)]
-                self.nored[i1 + str(i)] = self.problemImages[i1] | self.solutionImages[str(i)]
-                self.nored[i1 + str(i)] = np.logical_not(self.nored[i1 + str(i)]).astype(int)
+                im1 =  np.logical_not(self.problemImages[i1]).astype(int)
+                im2 =  np.logical_not(self.solutionImages[str(i)]).astype(int)
+                self.nored[i1 + str(i)] = im1 & im2
+                #self.nored[i1 + str(i)] = self.problemImages[i1] | self.solutionImages[str(i)]
+                #self.nored[i1 + str(i)] = np.logical_not(self.nored[i1 + str(i)]).astype(int)
                 
         else:
             self.xored[i1 + i2] = self.problemImages[i1] ^ self.problemImages[i2]
-            self.nored[i1 + i2] = self.problemImages[i1] | self.problemImages[i2]
-            self.nored[i1 + i2] = np.logical_not(self.nored[i1 + i2]).astype(int)
+            im1 =  np.logical_not(self.problemImages[i1]).astype(int)
+            im2 =  np.logical_not(self.problemImages[i2]).astype(int)
+            self.nored[i1 + i2] = im1 & im2
+            #self.nored[i1 + i2] = self.problemImages[i1] | self.problemImages[i2]
+            #self.nored[i1 + i2] = np.logical_not(self.nored[i1 + i2]).astype(int)
 
     def __GetImageCombinations__(self):
         for r in range(0,self.numRows):
