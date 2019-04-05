@@ -1,9 +1,19 @@
+"""
+The KM_Clusters and EM_Clusters classes contain some code that was written for CS6601's
+Assignment #5. All code seen here was and is created by me (Joseph M. Honea) barring some of
+class function names. These classes attempt to find clusters within an image by use of EM or
+K Means. The EM algorithm is currently unused as I was unable to get the bivariate gaussian
+approach to work.
+"""
+
 import os
 import csv
 import numpy as np
 import time
 import math
 from PIL import Image
+
+
 
 class KM_Clusters(object):
     def __init__(self, imageArray, dim, k):
